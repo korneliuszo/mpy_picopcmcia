@@ -1,0 +1,24 @@
+# cmake file for PicoPCMCIA board
+
+# TODO: DELETE THIS LINE WHEN SUBMODULED PICO-SDK INCLUDES THIS BOARD
+set(PICO_BOARD_HEADER_DIRS ${CMAKE_CURRENT_LIST_DIR})
+
+set(PICO_BOARD "picopcmcia_board")
+set(PICO_PLATFORM "rp2350")
+
+set(PICO_NUM_GPIOS 48)
+
+set(MICROPY_PY_LWIP ON)
+set(MICROPY_PY_NETWORK_CYW43 ON)
+
+# Bluetooth
+set(MICROPY_PY_BLUETOOTH ON)
+set(MICROPY_BLUETOOTH_BTSTACK ON)
+set(MICROPY_PY_BLUETOOTH_CYW43 ON)
+
+set(USER_C_MODULES
+    ${CMAKE_CURRENT_LIST_DIR}/../../src/cmodules/picopcmcia_low/micropython.cmake
+)
+
+# Board specific version of the frozen manifest
+set(MICROPY_FROZEN_MANIFEST ${MICROPY_BOARD_DIR}/manifest.py)
