@@ -24,16 +24,25 @@ typedef struct _picopcmcia_irq_obj_t {
     struct _mask_t * low;
 } picopcmcia_irq_obj_t;
 
-static mp_obj_t picopcmcia_irq_set_data(mp_obj_t self_in, mp_obj_t data_obj) {
+static mp_obj_t picopcmcia_irq_set_data(mp_obj_t self_in, mp_obj_t data_obj,mp_obj_t mask_obj) {
     picopcmcia_irq_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    uint32_t data = mp_obj_get_uint(data_obj);
+    uint32_t data;
+    if (!mp_obj_is_small_int(data_obj)) {
+        mp_raise_TypeError_int_conversion(data_obj);
+    }
+
+    if (!mp_obj_is_small_int(mask_obj)) {
+        mp_raise_TypeError_int_conversion(mask_obj);
+    }
+    data = MP_OBJ_SMALL_INT_VALUE(data_obj);
+    data |= MP_OBJ_SMALL_INT_VALUE(mask_obj)<<16;
     if(self->base.ishard)
         self->data = data;
     else
         pio_sm_put(PIO_INSTANCE(PIO_SEL_INSTANCE),SM_MACHINE,data); 
     return mp_const_none;
 }
-static MP_DEFINE_CONST_FUN_OBJ_2(picopcmcia_irq_set_data_obj, picopcmcia_irq_set_data);
+static MP_DEFINE_CONST_FUN_OBJ_3(picopcmcia_irq_set_data_obj, picopcmcia_irq_set_data);
 
 //packed? as asm interface?
 typedef struct _mask_t {
@@ -271,9 +280,9 @@ static mp_obj_t picopcmcia_common_irq(size_t n_args, const mp_obj_t *pos_args, m
         // Disable all IRQs while data is updated.
         //irq_set_enabled(self->irq, false);
         // write lock free code 
-        common_selectors[idx].mask = 0xfffffffful; // mask
+        common_selectors[idx].mask =  0x09fffffful; // mask
         __compiler_memory_barrier(); // makes only exact case pass here - well at least old irq notouchy
-        common_selectors[idx].start = 0xe0000000ul; // start
+        common_selectors[idx].start = 0x08000000ul; // start
         __compiler_memory_barrier(); // no irq from this point can trigger
 
         irq->base.handler = args[ARG_handler].u_obj;
@@ -285,9 +294,9 @@ static mp_obj_t picopcmcia_common_irq(size_t n_args, const mp_obj_t *pos_args, m
             common_selectors[idx].callback_ptr = irq;
             __compiler_memory_barrier(); // reseated object
 
-            common_selectors[idx].mask = 0xe0000000ul | args[ARG_mask].u_int; // mask with no pass on high bits
+            common_selectors[idx].mask = 0x08000000ul | args[ARG_mask].u_int; // mask with no pass on high bits
             __compiler_memory_barrier(); 
-            common_selectors[idx].start = args[ARG_start].u_int; // start ... offset broken but still correct
+            common_selectors[idx].start = 0x08000000ul | args[ARG_start].u_int; // start ... offset broken but still correct
             __compiler_memory_barrier();
             common_selectors[idx].mask = args[ARG_mask].u_int; // make offset technically correct
             __compiler_memory_barrier();

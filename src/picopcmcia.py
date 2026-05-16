@@ -38,7 +38,8 @@ HOST_IREQ=const(31)
     pull_thresh=32,
     autopush=True,
     autopull=True,
-    in_shiftdir=PIO.SHIFT_LEFT
+    in_shiftdir=PIO.SHIFT_LEFT,
+    out_shiftdir=PIO.SHIFT_RIGHT
 )
 def pcmcia_prog():
     mov(pins,null).side(0)
