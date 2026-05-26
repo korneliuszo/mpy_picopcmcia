@@ -26,7 +26,7 @@ HOST_IREQ=const(31)
 #         D11 D10 D9  D8 
 #         D7  D6  D5  D4 
 #         D3  D2  D1  D0
-#         set=WAIT(1=allow to run),MUX
+#         set=WAIT(1=allow to run),MUX (LSB)
 #         sideset=INPACK(DIR)
 
 @asm_pio(
@@ -50,7 +50,7 @@ def pcmcia_prog():
     nop().side(1)
     label("no_iord")
     out(pins,16)
-    out(pindirs,16) [4] #tpd time??
+    out(pindirs,16) [7] #tpd time??
     label("entry")
     wrap_target()
     set(pins,0b11)
@@ -58,8 +58,11 @@ def pcmcia_prog():
     mov(null,null).side(0b0) #pindir bug workaround
     set(pins,0b01)
     wait(0,gpio,27)
+    set(pins,0b00) ## wait even faster to comply
     in_(pins,26)
-    set(pins,0b10)[4] # should be 0b11 to no wait
+    set(pins,0b10)[4] 
+    # 0b10 - always wait (comply with 35ns attr req)
+    # 0b11 - wait on decode (200ns@300MHz)
     in_(pins,26)
     out(x,32) # 0- not us 1-inpack cycle, 2-normal cycle
     jmp(x_dec,"us")

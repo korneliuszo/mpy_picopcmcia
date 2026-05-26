@@ -4,7 +4,9 @@ require("bundle-networking")
 
 require("aioble")
 
+require("aiorepl")
+
 require("sdcard")
 
-module("boot.py", base_path="$(BOARD_DIR)/../../src/")
+module("main.py", base_path="$(BOARD_DIR)/../../src/")
 module("picopcmcia.py", base_path="$(BOARD_DIR)/../../src/")
