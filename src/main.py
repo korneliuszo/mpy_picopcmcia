@@ -8,6 +8,7 @@ import asyncio
 import struct
 
 import attr_rom
+import common_rom
 
 micropython.alloc_emergency_exception_buf(10000)
 
@@ -20,24 +21,8 @@ uart1.write(b"\r\n\r\n\r\n\r\nWOOTBOOT!!\r\n")
 picopcmcia.init()
 
 class tracerom:
-
-    def __init__(self):
-        self.rom = array.array("b",
-        [
-            (0x55),
-            (0x5A),
-            (0xA5),
-            (0xAA)
-        ]
-        )
-        rom = attr_rom.rom(self.rom)
-        picopcmcia.picopcmcia_low.irq(1,handler=rom)
-        l20=picopcmcia.picopcmcia_low.get_l2(0)
-        for i in range(len(l20)):
-            l20[i] = 0x01
-        l21=picopcmcia.picopcmcia_low.get_l2(1)
-        for i in range(len(l21)):
-            l21[i] = 0x02
+    def __init__(self,rom):
+        picopcmcia.picopcmcia_low.irq(1,handler=attr_rom.rom(rom))
         l22=picopcmcia.picopcmcia_low.get_l2(2)
         for i in range(len(l22)):
             l22[i] = 0x05
@@ -47,7 +32,21 @@ class tracerom:
         picopcmcia.picopcmcia_low.set_l1_entry(0x1000,2)
 
 
-u=tracerom()
+u=tracerom(open("attr.bin","rb").read())
+
+class tracecrom:
+    def __init__(self,rom):
+        picopcmcia.picopcmcia_low.irq(2,handler=common_rom.rom(rom))
+        l23=picopcmcia.picopcmcia_low.get_l2(3)
+        for i in range(len(l23)):
+            l23[i] = 0x06
+        picopcmcia.picopcmcia_low.set_l1_entry(0x1700,3)
+        picopcmcia.picopcmcia_low.set_l1_entry(0x1600,3)
+        picopcmcia.picopcmcia_low.set_l1_entry(0x1500,3)
+        picopcmcia.picopcmcia_low.set_l1_entry(0x1400,3)
+
+
+u=tracecrom(open("common.bin","rb").read())
 
 
 ring = micropython.RingIO(100)
