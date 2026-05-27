@@ -16,6 +16,8 @@ set(MICROPY_PY_BLUETOOTH ON)
 set(MICROPY_BLUETOOTH_BTSTACK ON)
 set(MICROPY_PY_BLUETOOTH_CYW43 ON)
 
+set(MICROPY_BOARD_LINKER_SCRIPT ${CMAKE_CURRENT_LIST_DIR}/memmap_mp_rp2350.ld)
+
 set(USER_C_MODULES
     ${CMAKE_CURRENT_LIST_DIR}/../../src/cmodules/picopcmcia_low/micropython.cmake
 )
