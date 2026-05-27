@@ -7,6 +7,12 @@ target_sources(picopcmcia_low INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}/attr_rom.c
 )
 
+set_source_files_properties(
+    ${CMAKE_CURRENT_LIST_DIR}/picopcmcia_low.c
+    ${CMAKE_CURRENT_LIST_DIR}/attr_rom.c
+    PROPERTIES COMPILE_FLAGS "-O3"
+)
+
 # Add the current directory as an include directory.
 target_include_directories(picopcmcia_low INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}
