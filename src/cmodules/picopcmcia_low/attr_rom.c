@@ -27,14 +27,16 @@ static MP_DEFINE_CONST_FUN_OBJ_1(attr_rom_ROM_buff_obj, attr_rom_ROM_buff);
 static uint32_t __no_inline_not_in_flash_func(attr_rom_fn)(void * self,uint32_t mux0,uint32_t mux1,uint32_t idx)
 {
     attr_rom_ROM_obj_t * self_ptr = self;
+    if(mux1 & (1<<23)) //CE1 high
+        return 0;
     if(mux0 & 0x1)
         return 0;
     uint32_t addr = mux0>>1;
     if(self_ptr->bufinfo.len < addr)
         return 0;
-    if(!self_ptr->bufinfo.buf)
+    uint8_t * buf;
+    if(!(buf = self_ptr->bufinfo.buf))
         return 0;
-    uint8_t * buf = self_ptr->bufinfo.buf;
     return (0xff0000ul) | (buf[addr]);
 }
 
