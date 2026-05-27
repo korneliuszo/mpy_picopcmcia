@@ -35,12 +35,14 @@ static void __not_in_flash_func(picopcmcia_trace_put(uint32_t mux0,uint32_t mux1
     micropython_ringio_obj_t * trace = MP_STATE_PORT(mpy_global_trace);
     if(trace)
     {
-        static uint16_t frame_idx = 0; // provide always sm
+        static uint16_t frame_idx = 0; // provides always smallint
         uint32_t buf[] =  {frame_idx++,mux0,mux1,idx};
-        if(ringbuf_free(&trace->ringbuffer)>=sizeof(buf))
+        ringbuf_t  rng = trace->ringbuffer;
+        if(ringbuf_free(&rng)>=sizeof(buf))
         {
-            ringbuf_memcpy_put_internal(&(trace->ringbuffer), (uint8_t *)buf, sizeof(buf));
-        }   
+            ringbuf_memcpy_put_internal(&rng, (uint8_t *)buf, sizeof(buf));
+            trace->ringbuffer.iput = rng.iput;
+        }
     }
 }
 
