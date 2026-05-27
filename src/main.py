@@ -21,18 +21,6 @@ picopcmcia.init()
 
 class tracerom:
 
-    @micropython.viper
-    def u(self:object,ctx:object):
-        #mux0=uint(ctx.mux0())
-        #data=uint(ptr16(self.rom)[mux0])
-        data=uint(0xaa55)
-        mask=uint(0xffff)
-        ctx.set_data(data,mask)
-        
-    @micropython.viper
-    def vinit(self:object):
-        self.ptr16=ptr16(self.rom)
-
     def __init__(self):
         self.rom = array.array("b",
         [
