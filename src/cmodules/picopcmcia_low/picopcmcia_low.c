@@ -19,6 +19,7 @@ static uint8_t l2_tables[7][32768];
 
 MP_REGISTER_ROOT_POINTER(void * mpy_global_irq_callback[IRQHANDLERS_SIZE]);
 
+static uint32_t max_handle_ticks = 0;
 
 //not in header
 typedef struct _micropython_ringio_obj_t {
@@ -46,17 +47,17 @@ static void __not_in_flash_func(picopcmcia_trace_put(uint32_t mux0,uint32_t mux1
     }
 }
 
-static void __not_in_flash_func(picopcmcia_isr_call(uint32_t mux0,uint32_t mux1,uint32_t idx))
+static uint32_t __not_in_flash_func(picopcmcia_isr_call(uint32_t mux0,uint32_t mux1,uint32_t idx))
 {
     mp_picopcmcia_low_c_worker_obj_t *irq = MP_STATE_PORT(mpy_global_irq_callback)[idx];
     if(irq && irq->fn)
     {
         uint32_t ret = irq->fn(irq,mux0,mux1,idx);
-        pio_sm_put(PIO_INSTANCE(PIO_SEL_INSTANCE),SM_MACHINE,ret);
+        return ret;
     }
     else
     {
-        pio_sm_put(PIO_INSTANCE(PIO_SEL_INSTANCE),SM_MACHINE,0);
+        return 0;
     }
 }
 
@@ -131,8 +132,14 @@ static void __not_in_flash_func(picopcmcia_irq)()
         : us,not_us
     );
     us:
+    uint32_t start=m33_hw->dwt_cyccnt;
     picopcmcia_trace_put(mux0,mux1,idx);
-    picopcmcia_isr_call(mux0,mux1,idx);
+    uint32_t ret  = picopcmcia_isr_call(mux0,mux1,idx);
+    uint32_t stop=m33_hw->dwt_cyccnt;
+    uint32_t cnt = stop-start;
+    if(cnt > max_handle_ticks)
+        max_handle_ticks = cnt;
+    pio_sm_put(PIO_INSTANCE(PIO_SEL_INSTANCE),SM_MACHINE,ret);
     not_us:
     return;
 }
@@ -206,8 +213,20 @@ static mp_obj_t picopcmcia_set_irq(size_t n_args, const mp_obj_t *pos_args, mp_m
 
 static MP_DEFINE_CONST_FUN_OBJ_KW(picopcmcia_irq_obj, 1, picopcmcia_set_irq);
 
+static mp_obj_t picopcmcia_get_ticks()
+{
+    return mp_obj_new_int(max_handle_ticks);
+}
+
+static MP_DEFINE_CONST_FUN_OBJ_0(picopcmcia_get_ticks_obj,picopcmcia_get_ticks);
+
+
 static mp_obj_t picopcmcia_init()
 {
+    m33_hw->demcr |= 0x01000000; // DEMCR "TRCENA" control bit set -> Enable the trace block
+    m33_hw->dwt_cyccnt = 0; // Reset the DWT CYCCNT cycle counter
+    m33_hw->dwt_ctrl |= 1; // DWT "CYCCNTENA" control bit set -> Enable the CYCCNT cycle counter
+
     irq_set_exclusive_handler(PIO_IRQ,picopcmcia_irq);
     irq_set_enabled(PIO_IRQ, true); // Enable the IRQ
     const uint irq_index = PIO_IRQ - pio_get_irq_num(PIO_INSTANCE(PIO_SEL_INSTANCE), 0); // Get index of the IRQ
@@ -249,7 +268,8 @@ static const mp_rom_map_elem_t picopcmcia_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_init), MP_ROM_PTR(&picopcmcia_init_obj) },
     { MP_ROM_QSTR(MP_QSTR_deinit), MP_ROM_PTR(&picopcmcia_deinit_obj) },
     { MP_ROM_QSTR(MP_QSTR_set_trace), MP_ROM_PTR(&picopcmcia_set_trace_obj) },
-    
+    { MP_ROM_QSTR(MP_QSTR_get_ticks), MP_ROM_PTR(&picopcmcia_get_ticks_obj) },
+
     { MP_ROM_QSTR(MP_QSTR_irq), MP_ROM_PTR(&picopcmcia_irq_obj) },
 
     { MP_ROM_QSTR(MP_QSTR_set_l1_entry), MP_ROM_PTR(&picopcmcia_set_l1_entry_obj) },

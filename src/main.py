@@ -57,14 +57,15 @@ async def s(ring):
     while True:
         data = await sreader.read(16)
         pdata = struct.unpack('<IIII',data)
-        uart1.write(hex(pdata[0]))
-        uart1.write(b"\t")
-        uart1.write(hex(pdata[1]))
-        uart1.write(b"\t")
-        uart1.write(hex(pdata[2]))
-        uart1.write(b"\t")
-        uart1.write(hex(pdata[3]))
-        uart1.write(b"\r\n")
+        out = "0x%04X 0x%07X 0x%07X 0x%02X\r\n" % pdata 
+        uart1.write(out)
+
+async def t():
+    while True:
+        await asyncio.sleep_ms(1000)
+        val = picopcmcia.picopcmcia_low.get_ticks() / 300
+        out = "Max us: %f\r\n" % (val,) 
+        uart1.write(out)
 
 picopcmcia.ready()
 
@@ -72,7 +73,8 @@ import aiorepl
 async def main():
     repl = asyncio.create_task(aiorepl.task())
     tracer = asyncio.create_task(s(ring))
-    await asyncio.gather(tracer, repl)
+    time = asyncio.create_task(t())
+    await asyncio.gather(tracer, time, repl)
 
 
 asyncio.run(main())
