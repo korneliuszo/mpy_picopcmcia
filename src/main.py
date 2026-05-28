@@ -66,6 +66,8 @@ async def s(ring):
         uart1.write(hex(pdata[3]))
         uart1.write(b"\r\n")
 
+picopcmcia.ready()
+
 import aiorepl
 async def main():
     repl = asyncio.create_task(aiorepl.task())

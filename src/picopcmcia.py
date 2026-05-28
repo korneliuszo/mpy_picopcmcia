@@ -69,6 +69,7 @@ def pcmcia_prog():
     wrap()
 
 def init():
+    Pin(HOST_IREQ, Pin.OUT).value(0)# RDY hack
     sm = StateMachine(0, pcmcia_prog,
         in_base=Pin(PICO_AD0),
         out_base=Pin(PICO_AD0),           
@@ -83,6 +84,7 @@ def init():
     #
     Pin(HOST_IOIS16, Pin.OUT).value(1) 
 
-    Pin(HOST_IREQ, Pin.OUT).value(1)# RDY hack
-
     picopcmcia_low.init()
+
+def ready():
+    Pin(HOST_IREQ, Pin.OUT).value(1)
