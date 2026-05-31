@@ -39,7 +39,7 @@ class tracecrom:
         picopcmcia.picopcmcia_low.irq(2,handler=common_rom.rom(rom))
         l23=picopcmcia.picopcmcia_low.get_l2(3)
         for i in range(len(l23)):
-            l23[i] = 0x06
+            l23[i] = 0x09
         picopcmcia.picopcmcia_low.set_l1_entry(0x1700,3)
         picopcmcia.picopcmcia_low.set_l1_entry(0x1600,3)
         picopcmcia.picopcmcia_low.set_l1_entry(0x1500,3)
