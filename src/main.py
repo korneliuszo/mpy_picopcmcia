@@ -49,7 +49,7 @@ class tracecrom:
 u=tracecrom(open("common.bin","rb").read())
 
 
-ring = micropython.RingIO(100)
+ring = micropython.RingIO(10000)
 picopcmcia.picopcmcia_low.set_trace(ring)
 async def s(ring):
     uart1.write(b"DUMP\r\n")
