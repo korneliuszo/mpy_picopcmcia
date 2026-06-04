@@ -17,7 +17,7 @@ static uint8_t * l1_sel[8192]={};
 
 static uint8_t l2_tables[7][32768];
 
-MP_REGISTER_ROOT_POINTER(void * mpy_global_irq_callback[IRQHANDLERS_SIZE]);
+MP_REGISTER_ROOT_POINTER(mp_obj_t mpy_global_irq_callback[IRQHANDLERS_SIZE]);
 
 static uint32_t max_handle_ticks = 0;
 
@@ -33,7 +33,7 @@ MP_REGISTER_ROOT_POINTER(mp_obj_t mpy_global_trace);
 
 static void __not_in_flash_func(picopcmcia_trace_put(uint32_t mux0,uint32_t mux1,uint32_t idx))
 {
-    micropython_ringio_obj_t * trace = MP_STATE_PORT(mpy_global_trace);
+    micropython_ringio_obj_t * trace = MP_OBJ_TO_PTR(MP_STATE_PORT(mpy_global_trace));
     if(trace)
     {
         static uint16_t frame_idx = 0; // provides always smallint
@@ -49,7 +49,7 @@ static void __not_in_flash_func(picopcmcia_trace_put(uint32_t mux0,uint32_t mux1
 
 static uint32_t __not_in_flash_func(picopcmcia_isr_call(uint32_t mux0,uint32_t mux1,uint32_t idx))
 {
-    mp_picopcmcia_low_c_worker_obj_t *irq = MP_STATE_PORT(mpy_global_irq_callback)[idx];
+    mp_picopcmcia_low_c_worker_obj_t *irq = MP_OBJ_TO_PTR(MP_STATE_PORT(mpy_global_irq_callback[idx]));
     if(irq && irq->fn)
     {
         uint32_t ret = irq->fn(irq,mux0,mux1,idx);
@@ -178,7 +178,7 @@ static MP_DEFINE_CONST_FUN_OBJ_2(picopcmcia_set_l1_entry_obj, picopcmcia_set_l1_
 
 static mp_obj_t picopcmcia_set_trace(mp_obj_t ringio_obj) {
 
-    MP_STATE_PORT(mpy_global_trace) = MP_OBJ_TO_PTR(ringio_obj);
+    MP_STATE_PORT(mpy_global_trace) = ringio_obj;
     return mp_const_none;   
 }
 
@@ -203,12 +203,11 @@ static mp_obj_t picopcmcia_set_irq(size_t n_args, const mp_obj_t *pos_args, mp_m
     if (n_args > 1 || kw_args->used != 0) {
         // Configure IRQ.
         if (args[ARG_handler].u_obj == mp_const_none)
-            MP_STATE_PORT(mpy_global_irq_callback)[idx] = NULL;
+            MP_STATE_PORT(mpy_global_irq_callback[idx]) = NULL;
         else
-            MP_STATE_PORT(mpy_global_irq_callback)[idx] = MP_OBJ_TO_PTR(args[ARG_handler].u_obj);
+            MP_STATE_PORT(mpy_global_irq_callback[idx]) = args[ARG_handler].u_obj;
     }
-    mp_picopcmcia_low_c_worker_obj_t *irq = MP_STATE_PORT(mpy_global_irq_callback)[idx];
-    return MP_OBJ_FROM_PTR(irq);
+    return MP_STATE_PORT(mpy_global_irq_callback[idx]);
 }
 
 static MP_DEFINE_CONST_FUN_OBJ_KW(picopcmcia_irq_obj, 1, picopcmcia_set_irq);
