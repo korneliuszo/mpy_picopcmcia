@@ -20,6 +20,7 @@ set(MICROPY_BOARD_LINKER_SCRIPT ${CMAKE_CURRENT_LIST_DIR}/memmap_mp_rp2350.ld)
 
 set(USER_C_MODULES
     ${CMAKE_CURRENT_LIST_DIR}/../../src/cmodules/picopcmcia_low/micropython.cmake
+    ${CMAKE_CURRENT_LIST_DIR}/../../src/roms/micropython.cmake
 )
 
 # Board specific version of the frozen manifest

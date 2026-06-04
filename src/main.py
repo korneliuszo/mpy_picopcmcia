@@ -10,6 +10,7 @@ import struct
 import attr_rom
 import common_rom
 import ioiface
+import included_roms
 
 micropython.alloc_emergency_exception_buf(10000)
 
@@ -33,11 +34,12 @@ class tracerom:
         picopcmcia.picopcmcia_low.set_l1_entry(0x1000,2)
 
 
-u=tracerom(open("attr.bin","rb").read())
+u=tracerom(included_roms.attr())
 
 class tracecrom:
     def __init__(self,rom):
         picopcmcia.picopcmcia_low.irq(2,handler=common_rom.rom(rom))
+        picopcmcia.picopcmcia_low.irq(5,handler=common_rom.ram(rom))
         l23=picopcmcia.picopcmcia_low.get_l2(3)
         for i in range(len(l23)):
             l23[i] = 0x09
@@ -45,9 +47,16 @@ class tracecrom:
         picopcmcia.picopcmcia_low.set_l1_entry(0x1600,3)
         picopcmcia.picopcmcia_low.set_l1_entry(0x1500,3)
         picopcmcia.picopcmcia_low.set_l1_entry(0x1400,3)
+        l26=picopcmcia.picopcmcia_low.get_l2(6)
+        for i in range(len(l26)):
+            l26[i] = (5<<2)|1
+        picopcmcia.picopcmcia_low.set_l1_entry(0x0F00,6)
+        picopcmcia.picopcmcia_low.set_l1_entry(0x0E00,6)
+        picopcmcia.picopcmcia_low.set_l1_entry(0x0D00,6)
+        picopcmcia.picopcmcia_low.set_l1_entry(0x0C00,6)        
 
 
-u=tracecrom(open("common.bin","rb").read())
+u=tracecrom(bytearray(included_roms.rom_8088()))
 
 
 ring = micropython.RingIO(10000)
@@ -86,14 +95,9 @@ class Testioface():
         self.recv=micropython.RingIO(100)
         worker.set_send(self.send)
         worker.set_recv(self.recv)
-        self.task = asyncio.create_task(self.thread())
+        self.sreader = asyncio.StreamReader(self.recv)
+        self.task = asyncio.create_task(aiorepl.task(g={"self": self}))
 
-    async def thread(self):
-        sreader = asyncio.StreamReader(self.recv)
-        while True:
-            data = await sreader.read(1)
-            print("pong" + hex(data[0]))
-            self.send.write(data)
 
 def Testiofacecallback(worker):
     print("preinit")
@@ -105,10 +109,10 @@ picopcmcia.ready()
 
 import aiorepl
 async def main():
-    repl = asyncio.create_task(aiorepl.task())
+    #repl = asyncio.create_task(aiorepl.task())
     tracer = asyncio.create_task(s(ring))
     time = asyncio.create_task(t())
-    await asyncio.gather(tracer, time, repl)
+    await asyncio.gather(tracer, time)
 
 
 asyncio.run(main())
