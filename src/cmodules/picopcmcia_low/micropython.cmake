@@ -6,12 +6,14 @@ target_sources(picopcmcia_low INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}/picopcmcia_low.c
     ${CMAKE_CURRENT_LIST_DIR}/attr_rom.c
     ${CMAKE_CURRENT_LIST_DIR}/common_rom.c
+    ${CMAKE_CURRENT_LIST_DIR}/ioiface.c
 )
 
 set_source_files_properties(
     ${CMAKE_CURRENT_LIST_DIR}/picopcmcia_low.c
     ${CMAKE_CURRENT_LIST_DIR}/attr_rom.c
     ${CMAKE_CURRENT_LIST_DIR}/common_rom.c
+    ${CMAKE_CURRENT_LIST_DIR}/ioiface.c
     PROPERTIES COMPILE_FLAGS "-O3"
 )
 

@@ -9,6 +9,7 @@ import struct
 
 import attr_rom
 import common_rom
+import ioiface
 
 micropython.alloc_emergency_exception_buf(10000)
 
@@ -66,6 +67,39 @@ async def t():
         val = picopcmcia.picopcmcia_low.get_ticks() / 300
         out = "Max us: %f\r\n" % (val,) 
         uart1.write(out)
+
+ioiface.init()
+picopcmcia.picopcmcia_low.irq(3,handler=ioiface.RD())
+picopcmcia.picopcmcia_low.irq(4,handler=ioiface.WR())
+l24=picopcmcia.picopcmcia_low.get_l2(4)
+l24[0] = (3<<2)|2
+picopcmcia.picopcmcia_low.set_l1_entry(0x1A00,4)
+l25=picopcmcia.picopcmcia_low.get_l2(5)
+l25[0] = (4<<2)|1
+picopcmcia.picopcmcia_low.set_l1_entry(0x1900,5)
+
+class Testioface():
+
+    def __init__(self,worker):
+        print("init")
+        self.send=micropython.RingIO(100)
+        self.recv=micropython.RingIO(100)
+        worker.set_send(self.send)
+        worker.set_recv(self.recv)
+        self.task = asyncio.create_task(self.thread())
+
+    async def thread(self):
+        sreader = asyncio.StreamReader(self.recv)
+        while True:
+            data = await sreader.read(1)
+            print("pong" + hex(data[0]))
+            self.send.write(data)
+
+def Testiofacecallback(worker):
+    print("preinit")
+    return Testioface(worker)
+
+ioiface.register_entry(0,Testiofacecallback)
 
 picopcmcia.ready()
 
