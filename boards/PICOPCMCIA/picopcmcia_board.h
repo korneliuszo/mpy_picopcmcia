@@ -75,9 +75,9 @@
 #define MICROPY_HW_FLASH_MAX_FREQ 133000000
 #define PICO_FLASH_SPI_CLKDIV 3
 
-// pico_cmake_set_default PICO_FLASH_SIZE_BYTES = (4 * 1024 * 1024)
+// pico_cmake_set_default PICO_FLASH_SIZE_BYTES = (2 * 1024 * 1024)
 #ifndef PICO_FLASH_SIZE_BYTES
-#define PICO_FLASH_SIZE_BYTES (4 * 1024 * 1024)
+#define PICO_FLASH_SIZE_BYTES (2 * 1024 * 1024)
 #endif
 
 
