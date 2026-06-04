@@ -6,7 +6,7 @@
 
 #include "shared/runtime/mpirq.h"
 
-#define IRQHANDLERS_SIZE 5
+#define IRQHANDLERS_SIZE 10
 
 // it should be params of init, def is easier for now
 #define PIO_SEL_INSTANCE 0
