@@ -60,7 +60,7 @@ def pcmcia_prog():
     wait(0,gpio,27)
     set(pins,0b00) ## wait even faster to comply
     in_(pins,26)
-    set(pins,0b10)[4] 
+    set(pins,0b10)[5] 
     # 0b10 - always wait (comply with 35ns attr req)
     # 0b11 - wait on decode (200ns@300MHz)
     in_(pins,26)
