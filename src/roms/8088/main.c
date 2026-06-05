@@ -101,9 +101,8 @@ int select_next(
 	int i;
 
 	outp(port_no+1,0x01);
-	while(inp(port_no)!=0x01)
-		for(int a=0;a<100;a++)
-			__asm("nop");
+	while(inp(port_no+1)!=0x01)
+		for(i=0;i<100;i++);
 
 	outp(port_no,irq);
 	outp(port_no,codeplace);
@@ -112,15 +111,33 @@ int select_next(
 	return 1;
 }
 
+#define PC_SLOT 0x40
+
 int __cdecl start(uint16_t irq, IRQ_DATA far * params);
 int start(uint16_t irq, IRQ_DATA far * params)
 {
+	//io enable hack
+		   outp(0x3e0,0x08|PC_SLOT);
+		   outp(0x3e1,0xf8);
+		   outp(0x3e0,0x09|PC_SLOT);
+		   outp(0x3e1,0x00);
+		   outp(0x3e0,0x0A|PC_SLOT);
+		   outp(0x3e1,0xf9);
+		   outp(0x3e0,0x0B|PC_SLOT);
+		   outp(0x3e1,0x00);
+		   outp(0x3e0,0x06|PC_SLOT);
+		   uint8_t v=inp(0x3e1);
+		   outp(0x3e0,0x06|PC_SLOT);			   
+		   outp(0x3e1,v|0x40);
+
 	unsigned port_no = port_nog;
 	uint8_t sync_counter = 0;
 	uint8_t rettype;
 	switch(irq)
 	{
-	case 0x00: rettype = 2; break;
+	case 0x00: rettype = 2; 
+
+		   break;
 	case 0x01: rettype = 0x7f; break;
 	default: rettype = 0x00; break;
 	}
@@ -138,7 +155,7 @@ int start(uint16_t irq, IRQ_DATA far * params)
 	while(1)
 	{
 		uint8_t req;
-		while((req = inph(port_no))==0xff) //NotYET
+		while((req = inph(port_no))==0xffu) //NotYET
 		{
 			//powersave??
 		}
