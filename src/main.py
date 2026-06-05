@@ -81,10 +81,16 @@ ioiface.init()
 picopcmcia.picopcmcia_low.irq(3,handler=ioiface.RD())
 picopcmcia.picopcmcia_low.irq(4,handler=ioiface.WR())
 l24=picopcmcia.picopcmcia_low.get_l2(4)
-l24[0] = (3<<2)|2
+l24[0x1f] = (3<<2)|2
+#for i in range(len(l24)):
+#    l24[i] = (3<<2)|1
+
 picopcmcia.picopcmcia_low.set_l1_entry(0x1A00,4)
 l25=picopcmcia.picopcmcia_low.get_l2(5)
-l25[0] = (4<<2)|1
+l25[0x1f] = (4<<2)|1
+#for i in range(len(l25)):
+#    l25[i] = (4<<2)|1
+
 picopcmcia.picopcmcia_low.set_l1_entry(0x1900,5)
 
 class Testioface():
