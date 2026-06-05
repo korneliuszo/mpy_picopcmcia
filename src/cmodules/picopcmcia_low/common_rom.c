@@ -28,7 +28,7 @@ static MP_DEFINE_CONST_FUN_OBJ_1(common_rom_ROM_buff_obj, common_rom_ROM_buff);
 static uint32_t __no_inline_not_in_flash_func(common_rom_fn)(void * self,uint32_t mux0,uint32_t mux1,uint32_t idx)
 {
     common_rom_ROM_obj_t * self_ptr = self;
-    uint32_t addr = mux0 - 0x4000;
+    uint32_t addr = mux0 - 0x5000;
     if(!(mux1 & (1<<24))) //CE2 low
         addr&=~0x1ul;
     if(self_ptr->bufinfo.len < addr)
@@ -47,7 +47,7 @@ static uint32_t __no_inline_not_in_flash_func(common_rom_fn)(void * self,uint32_
 static uint32_t __no_inline_not_in_flash_func(common_ram_fn)(void * self,uint32_t mux0,uint32_t mux1,uint32_t idx)
 {
     common_rom_ROM_obj_t * self_ptr = self;
-    uint32_t addr = mux0 - 0x4000;
+    uint32_t addr = mux0 - 0x5000;
     if(!(mux1 & (1<<24))) //CE2 low
         addr&=~0x1ul;
     if(self_ptr->bufinfo.len < addr)
