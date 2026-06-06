@@ -12,6 +12,9 @@ import common_rom
 import ioiface
 import included_roms
 
+import bioslayer
+import int13hhandler
+
 micropython.alloc_emergency_exception_buf(10000)
 
 machine.freq(300000000)
@@ -93,17 +96,68 @@ l25[0x1f] = (4<<2)|1
 
 picopcmcia.picopcmcia_low.set_l1_entry(0x1900,5)
 
+INT19_CBK=None
+INT13_CBK=None
+
+import vfs
+import sdcard
+vfs.mount(sdcard.SDCard(machine.SPI(0),machine.Pin(37)),"/sd")
+
+fdfile=open("/sd/TFT.raw","rb+")
+
 class Testioface():
 
     def __init__(self,worker):
         print("init")
-        self.send=micropython.RingIO(100)
-        self.recv=micropython.RingIO(100)
+        self.send=micropython.RingIO(1000)
+        self.recv=micropython.RingIO(1000)
         worker.set_send(self.send)
         worker.set_recv(self.recv)
         self.sreader = asyncio.StreamReader(self.recv)
-        self.task = asyncio.create_task(aiorepl.task(g={"self": self}))
+        self.task = asyncio.create_task(self.coro())
 
+    async def coro(self):
+        global INT19_CBK
+        global INT13_CBK
+        global fdfile        
+        await bioslayer.readentry(self)
+        if self.regs["irq"] == 0:
+            await bioslayer.putstr(self,"PICOPCMCIA")
+            INT19_CBK = await bioslayer.install_irq(self,0x19)
+            await bioslayer.callback_end_noset(self)
+            return
+        elif self.regs["irq"] == 1:
+            if self.regs["codeplace"] == 0x19:
+                await bioslayer.putstr(self,"PICOPCMCIA")
+                INT13_CBK = await bioslayer.install_irq(self,0x13)
+                #await bioslayer.chain(self,INT19_CBK)
+                #await bioslayer.callback_end(self)
+                regs = bioslayer.stackregs()
+                regs["ax"] = 0x0201
+                regs["cx"] = 0x1
+                regs["dx"] = 0
+                regs["es"] = 0
+                regs["bx"] = 0x7c00
+                await bioslayer.stackcode8(self,regs,bytes([0xCD,0x13,0xCB]))
+                await bioslayer.stackcode8(self,regs,bytes([
+                    0xEA, 0x00, 0x7C, 0x00, 0x00, 0x00, 0x00])) #yolo, python hangs here - exit jmp not handled, should be by retcode
+                
+
+                return
+            elif self.regs["codeplace"] == 0x13:
+                if self.regs["dx"]&0xff == 0:
+                    await int13hhandler.handler(self,fdfile)
+                    return
+                else:
+                    self.regs["ax"] = 0x0101
+                    self.regs["rf"] |= 0x0001
+                    self.regs["rettype"]=1
+                    await bioslayer.callback_end(self)
+                    return
+        
+        print("No handler for:\n")
+        print(self.regs)
+        
 
 def Testiofacecallback(worker):
     print("preinit")

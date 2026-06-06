@@ -29,6 +29,9 @@ async def readentry(self):
 async def finish_cmd(self,req):
     if (await self.sreader.readexactly(1))[0] != req:
         raise Exception("Not synced")
+    if self.send.any() != 0:
+        raise Exception("Not synced2")
+
 
 async def callback_end(self):
     self.send.write(bytes([
@@ -108,6 +111,13 @@ async def stackcode8(self,regs,code):
     return regs_out
 
 async def putmem(self,seg,addr,data):
+    l=len(data)
+    for i in range(0,l,512):
+        l2=min(512,l-i)        
+        await putmems(self,seg,addr+i,data[i:i+l2])
+
+async def putmems(self,seg,addr,data):
+    print("Put: ",seg,addr,len(data))
     self.send.write(
         bytes([0x06])+
         struct.pack(">HHH",seg,addr,len(data))+
@@ -115,6 +125,12 @@ async def putmem(self,seg,addr,data):
     await finish_cmd(self,0x06)
 
 async def getmem(self,seg,addr,l):
+    ret = bytearray(l)
+    for i in range(0, l, 512):
+        l2 = min(512,l-i)
+        ret[i:i+l2] = await getmem_pages(self,seg,addr+i,l2)
+
+async def getmems(self,seg,addr,l):
     self.send.write(
         bytes([0x07])+
         struct.pack(">HHH",seg,addr,l))
