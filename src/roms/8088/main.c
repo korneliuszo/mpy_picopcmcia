@@ -131,13 +131,11 @@ int start(uint16_t irq, IRQ_DATA far * params)
 		   outp(0x3e1,v|0x40);
 
 	unsigned port_no = port_nog;
-	uint8_t sync_counter = 0;
+	//uint8_t sync_counter = 0;
 	uint8_t rettype;
 	switch(irq)
 	{
-	case 0x00: rettype = 2; 
-
-		   break;
+	case 0x00: rettype = 2; break;
 	case 0x01: rettype = 0x7f; break;
 	default: rettype = 0x00; break;
 	}
@@ -152,9 +150,10 @@ int start(uint16_t irq, IRQ_DATA far * params)
 		while(1);
 	}
 	outp(0x80,0x00); //DEBUG
+	uint8_t req = 0x03;
 	while(1)
 	{
-		uint8_t req;
+		outp(port_no,req);		
 		while((req = inph(port_no))==0xffu) //NotYET
 		{
 			//powersave??
@@ -181,11 +180,11 @@ int start(uint16_t irq, IRQ_DATA far * params)
 
 			continue;
 		 }
-		case 0x02:
+		case 0x02: //set return type
 			putmem((uint8_t far *)params,sizeof(*params),port_no);
 			rettype = inph(port_no);
 			continue;
-		case 0x08:
+		case 0x08: //install irq
 		 {
 			unsigned irq = inp(port_no);
 			unsigned far * IVT=0x0000:>((unsigned*)(irq*4));
@@ -204,6 +203,7 @@ int start(uint16_t irq, IRQ_DATA far * params)
 			outp(port_no,old[1]>>8);
 			continue;
 		 }
+#if 0 //FASTIO
 		case 0x04:
 		 {
 			unsigned port = inp_bew(port_no);
@@ -218,6 +218,7 @@ int start(uint16_t irq, IRQ_DATA far * params)
 			outp(port_no,val);
 			continue;
 		 }
+#endif FAST_IO
 		case 0x06:
 		 {
 			__segment seg = inp_bew(port_no);
@@ -234,18 +235,20 @@ int start(uint16_t irq, IRQ_DATA far * params)
 			getmem(addr,len,port_no);
 			continue;
 		}
-		case 0x09:
+		 /*
+		case 0x09: //SYNC - realizing exit and completion send - no need
 		 {
 			 outp(port_no,sync_counter++);
 			 continue;
 		 }
-		case 0x0A:
+		case 0x0A: //set irqentry - before had sense
 			outp(port_no,irq);
 			outp(port_no,codeplace);
 			for(uint8_t far * i=(uint8_t far *)params, far *e = i+sizeof(*params);i<e;i++)
 				outp(port_no,*i);
 			outp(port_no,rettype);
 			continue;
+			*/
 	 }
 	}
 }
