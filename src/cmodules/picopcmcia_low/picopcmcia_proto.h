@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: Korneliusz Osmenda <korneliuszo@gmail.com>
+ *
+ * SPDX-License-Identifier: MIT
+ */
+ 
 #pragma once
 
 typedef struct _mp_picopcmcia_low_c_worker_obj_t {

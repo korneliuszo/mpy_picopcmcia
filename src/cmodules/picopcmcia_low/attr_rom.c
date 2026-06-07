@@ -1,24 +1,21 @@
+/*
+ * SPDX-FileCopyrightText: Korneliusz Osmenda <korneliuszo@gmail.com>
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 #include "py/runtime.h"
 #include "pico.h"
 #include "picopcmcia_proto.h"
 #include "stdint.h"
 
-// This structure represents Timer instance objects.
 typedef struct _attr_rom_ROM_obj_t {
-    // All objects start with the base.
     mp_picopcmcia_low_c_worker_obj_t base;
     mp_obj_t buff;
-    // Everything below can be thought of as instance attributes, but they
-    // cannot be accessed by MicroPython code directly. In this example we
-    // store the time at which the object was created.
     mp_buffer_info_t bufinfo;
 } attr_rom_ROM_obj_t;
 
-// This is the Timer.time() method. After creating a Timer object, this
-// can be called to get the time elapsed since creating the Timer.
 static mp_obj_t attr_rom_ROM_buff(mp_obj_t self_in) {
-    // The first argument is self. It is cast to the *example_Timer_obj_t
-    // type so we can read its attributes.
     attr_rom_ROM_obj_t *self = MP_OBJ_TO_PTR(self_in);
     return self->buff;
 }
@@ -40,10 +37,7 @@ static uint32_t __no_inline_not_in_flash_func(attr_rom_fn)(void * self,uint32_t 
     return (0xff0000ul) | (buf[addr]);
 }
 
-// This represents Timer.__new__ and Timer.__init__, which is called when
-// the user instantiates a Timer object.
 static mp_obj_t attr_rom_ROM_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
-    // Allocates the new object and sets the type.
     attr_rom_ROM_obj_t *self = mp_obj_malloc(attr_rom_ROM_obj_t, type);
 
     enum { ARG_buff };
@@ -73,14 +67,10 @@ static mp_obj_t attr_rom_ROM_make_new(const mp_obj_type_t *type, size_t n_args, 
     return MP_OBJ_FROM_PTR(self);
 }
 
-
-// This collects all methods and other static class attributes of the Timer.
-// The table structure is similar to the module table, as detailed below.
 static const mp_rom_map_elem_t attr_rom_ROM_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_buff), MP_ROM_PTR(&attr_rom_ROM_buff_obj) },
 };
 static MP_DEFINE_CONST_DICT(attr_rom_ROM_locals_dict, attr_rom_ROM_locals_dict_table);
-
 
 MP_DEFINE_CONST_OBJ_TYPE(
     attr_rom_type_ROM,
@@ -90,13 +80,8 @@ MP_DEFINE_CONST_OBJ_TYPE(
     locals_dict, &attr_rom_ROM_locals_dict
     );
 
-// Define all properties of the module.
-// Table entries are key/value pairs of the attribute name (a string)
-// and the MicroPython object reference.
-// All identifiers and strings are written as MP_QSTR_xxx and will be
-// optimized to word-sized integers by the build system (interned strings).
 static const mp_rom_map_elem_t attr_rom_module_globals_table[] = {
-    { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_attr_rom_low) },    
+    { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_attr_rom_low) },
     { MP_ROM_QSTR(MP_QSTR_rom), MP_ROM_PTR(&attr_rom_type_ROM) },
 };
 

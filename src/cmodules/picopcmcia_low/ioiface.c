@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: Korneliusz Osmenda <korneliuszo@gmail.com>
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 #include "py/runtime.h"
 #include "pico.h"
 #include "hardware/gpio.h"
@@ -31,8 +37,6 @@ MP_REGISTER_ROOT_POINTER(mp_obj_t mpy_global_ioiface_protocols_e[4]);
 extern const mp_obj_type_t ioiface_type_Worker;
 
 
-// This is the Timer.time() method. After creating a Timer object, this
-// can be called to get the time elapsed since creating the Timer.
 static mp_obj_t ioiface_new_proto(mp_obj_t worker_in) {
     mp_ioiface_c_worker_obj_t * worker = MP_OBJ_TO_PTR(worker_in);
     if(worker->creat_proto_obj == mp_const_none)
@@ -128,8 +132,6 @@ static uint32_t __no_inline_not_in_flash_func(ioiface_wr_fn)(void * self,uint32_
 }
 
 static mp_obj_t ioiface_worker_set_send(mp_obj_t self_in, mp_obj_t send) {
-    // The first argument is self. It is cast to the *example_Timer_obj_t
-    // type so we can read its attributes.
     mp_ioiface_c_worker_obj_t *self = MP_OBJ_TO_PTR(self_in);
     self->send = send;
     return mp_const_none;
@@ -137,16 +139,12 @@ static mp_obj_t ioiface_worker_set_send(mp_obj_t self_in, mp_obj_t send) {
 static MP_DEFINE_CONST_FUN_OBJ_2(ioiface_worker_set_send_obj, ioiface_worker_set_send);
 
 static mp_obj_t ioiface_worker_send(mp_obj_t self_in) {
-    // The first argument is self. It is cast to the *example_Timer_obj_t
-    // type so we can read its attributes.
     mp_ioiface_c_worker_obj_t *self = MP_OBJ_TO_PTR(self_in);
     return self->send;
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(ioiface_worker_send_obj, ioiface_worker_send);
 
 static mp_obj_t ioiface_worker_set_recv(mp_obj_t self_in, mp_obj_t recv) {
-    // The first argument is self. It is cast to the *example_Timer_obj_t
-    // type so we can read its attributes.
     mp_ioiface_c_worker_obj_t *self = MP_OBJ_TO_PTR(self_in);
     self->recv = recv;
     return mp_const_none;
@@ -154,15 +152,11 @@ static mp_obj_t ioiface_worker_set_recv(mp_obj_t self_in, mp_obj_t recv) {
 static MP_DEFINE_CONST_FUN_OBJ_2(ioiface_worker_set_recv_obj, ioiface_worker_set_recv);
 
 static mp_obj_t ioiface_worker_recv(mp_obj_t self_in) {
-    // The first argument is self. It is cast to the *example_Timer_obj_t
-    // type so we can read its attributes.
     mp_ioiface_c_worker_obj_t *self = MP_OBJ_TO_PTR(self_in);
     return self->recv;
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(ioiface_worker_recv_obj, ioiface_worker_recv);
 
-// This collects all methods and other static class attributes of the Timer.
-// The table structure is similar to the module table, as detailed below.
 static const mp_rom_map_elem_t ioiface_worker_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_set_send), MP_ROM_PTR(&ioiface_worker_set_send_obj) },
     { MP_ROM_QSTR(MP_QSTR_send), MP_ROM_PTR(&ioiface_worker_send_obj) },
@@ -181,14 +175,12 @@ MP_DEFINE_CONST_OBJ_TYPE(
 
 
 static mp_obj_t ioiface_rd_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
-    // Allocates the new object and sets the type.
     mp_picopcmcia_low_c_worker_obj_t *self = mp_obj_malloc(mp_picopcmcia_low_c_worker_obj_t, type);
     self->fn = ioiface_rd_fn;
     return MP_OBJ_FROM_PTR(self);
 }
 
 static mp_obj_t ioiface_wr_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
-    // Allocates the new object and sets the type.
     mp_picopcmcia_low_c_worker_obj_t *self = mp_obj_malloc(mp_picopcmcia_low_c_worker_obj_t, type);
     self->fn = ioiface_wr_fn;
     return MP_OBJ_FROM_PTR(self);
@@ -243,11 +235,6 @@ static mp_obj_t ioiface_init() {
 static MP_DEFINE_CONST_FUN_OBJ_0(ioiface_init_obj, ioiface_init);
 
 
-// Define all properties of the module.
-// Table entries are key/value pairs of the attribute name (a string)
-// and the MicroPython object reference.
-// All identifiers and strings are written as MP_QSTR_xxx and will be
-// optimized to word-sized integers by the build system (interned strings).
 static const mp_rom_map_elem_t ioiface_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_ioiface_low) },    
     { MP_ROM_QSTR(MP_QSTR_worker), MP_ROM_PTR(&ioiface_type_Worker) },

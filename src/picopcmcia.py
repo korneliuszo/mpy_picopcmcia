@@ -1,3 +1,7 @@
+
+# SPDX-FileCopyrightText: Korneliusz Osmenda <korneliuszo@gmail.com>
+# SPDX-License-Identifier: MIT
+
 from machine import Pin
 from rp2 import PIO, StateMachine, asm_pio
 import asyncio

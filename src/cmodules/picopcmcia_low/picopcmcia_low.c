@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: Korneliusz Osmenda <korneliuszo@gmail.com>
+ *
+ * SPDX-License-Identifier: MIT
+ */
+
 // Include MicroPython API.
 #include "py/runtime.h"
 #include "hardware/pio.h"
@@ -62,8 +68,8 @@ static uint32_t __not_in_flash_func(picopcmcia_isr_call(uint32_t mux0,uint32_t m
 }
 
 
-// add into ram section ... prefferably exclusive to running core
-// callback outside self immutable object field tuple needs core1 started mpy way for atomics to work
+// add into ram section ... prefferably exclusive to core running irq
+// C code calls only from this point as . 12us timing window
 // 
 static void __not_in_flash_func(picopcmcia_irq)()
 {
@@ -222,6 +228,7 @@ static MP_DEFINE_CONST_FUN_OBJ_0(picopcmcia_get_ticks_obj,picopcmcia_get_ticks);
 
 static mp_obj_t picopcmcia_init()
 {
+    // start debug register for cycle count of C code
     m33_hw->demcr |= 0x01000000; // DEMCR "TRCENA" control bit set -> Enable the trace block
     m33_hw->dwt_cyccnt = 0; // Reset the DWT CYCCNT cycle counter
     m33_hw->dwt_ctrl |= 1; // DWT "CYCCNTENA" control bit set -> Enable the CYCCNT cycle counter
@@ -256,11 +263,6 @@ static mp_obj_t picopcmcia_deinit()
 static MP_DEFINE_CONST_FUN_OBJ_0(picopcmcia_deinit_obj,picopcmcia_deinit);
 
 
-// Define all properties of the module.
-// Table entries are key/value pairs of the attribute name (a string)
-// and the MicroPython object reference.
-// All identifiers and strings are written as MP_QSTR_xxx and will be
-// optimized to word-sized integers by the build system (interned strings).
 static const mp_rom_map_elem_t picopcmcia_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_picopcmcia_low) },
     

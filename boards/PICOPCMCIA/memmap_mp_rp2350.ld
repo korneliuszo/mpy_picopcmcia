@@ -61,6 +61,7 @@ SECTIONS
         *(.init)
         *libgcc.a:cmse_nonsecure_call.o
         /* Change for MicroPython... exclude gc.c, parse.c, vm.c from flash */
+        /* fixed for libg containing memcpy */
         *(EXCLUDE_FILE(*libgcc.a: *libc.a:*lib_a-mem*.o *libg.a:*libc_a-mem*.o *libm.a: *gc.c.obj *vm.c.obj *parse.c.obj) .text*)
         *(.fini)
         /* Pull all c'tors into .text */

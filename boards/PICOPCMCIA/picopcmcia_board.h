@@ -8,7 +8,7 @@
 // NOTE: THIS HEADER IS ALSO INCLUDED BY ASSEMBLER SO
 //       SHOULD ONLY CONSIST OF PREPROCESSOR DIRECTIVES
 // -----------------------------------------------------
-// Board definition for the SparkFun IoT RedBoard - RP2350
+// Board definition for the yyzkevin PicoPCMCIA board
 //
 // This header may be included by other board headers as "boards/sparkfun_iotredboard_rp2350.h"
 

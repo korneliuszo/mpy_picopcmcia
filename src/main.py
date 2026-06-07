@@ -1,3 +1,7 @@
+
+# SPDX-FileCopyrightText: Korneliusz Osmenda <korneliuszo@gmail.com>
+# SPDX-License-Identifier: MIT
+
 import machine
 import picopcmcia
 import micropython
