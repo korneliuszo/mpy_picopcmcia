@@ -85,7 +85,10 @@ static uint32_t __no_inline_not_in_flash_func(ioiface_rd_fn)(void * self,uint32_
     if (ring_obj == mp_const_none)
         return (0xff0000ul) | 0xff;
     micropython_ringio_obj_t * ring = MP_OBJ_TO_PTR(ring_obj);
-    return (0xff0000ul) | (ringbuf_get(&ring->ringbuffer)&0xff);
+    ringbuf_t  ringbuffer = ring->ringbuffer;
+    uint32_t ret = (0xff0000ul) | (ringbuf_get(&ringbuffer)&0xff);
+    ring->ringbuffer.iget = ringbuffer.iget;
+    return ret;
 }
 
 static uint32_t __no_inline_not_in_flash_func(ioiface_wr_fn)(void * self,uint32_t mux0,uint32_t mux1,uint32_t idx)
