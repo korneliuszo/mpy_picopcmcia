@@ -88,7 +88,5 @@ def init():
     #
     Pin(HOST_IOIS16, Pin.OUT).value(1) 
 
-    picopcmcia_low.init()
-
 def ready():
     Pin(HOST_IREQ, Pin.OUT).value(1)

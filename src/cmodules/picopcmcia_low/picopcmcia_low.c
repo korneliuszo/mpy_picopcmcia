@@ -145,6 +145,7 @@ static void __not_in_flash_func(picopcmcia_irq)()
     uint32_t cnt = stop-start;
     if(cnt > max_handle_ticks)
         max_handle_ticks = cnt;
+    __sev();
     pio_sm_put(PIO_INSTANCE(PIO_SEL_INSTANCE),SM_MACHINE,ret);
     not_us:
     return;

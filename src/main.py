@@ -10,6 +10,7 @@ import uio
 import builtins
 import asyncio
 import struct
+import time
 
 import attr_rom
 import common_rom
@@ -28,6 +29,19 @@ uart1 = machine.UART(0,baudrate=1000000)
 uart1.write(b"\r\n\r\n\r\n\r\nWOOTBOOT!!\r\n")
 
 picopcmcia.init()
+
+tsf = asyncio.ThreadSafeFlag()
+
+def thr(tsf):
+    picopcmcia.picopcmcia_low.init()
+    tsf.set()
+    while True:
+        time.sleep_ms(1000)
+
+import _thread
+_thread.start_new_thread(thr,(tsf,))
+
+asyncio.run(tsf.wait())
 
 class tracerom:
     def __init__(self,rom):
