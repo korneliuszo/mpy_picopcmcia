@@ -9,6 +9,7 @@ import array
 import uio
 import builtins
 import asyncio
+import uasyncio
 import struct
 import time
 
@@ -79,18 +80,6 @@ class tracecrom:
 
 u=tracecrom(bytearray(included_roms.rom_8088()))
 
-
-ring = micropython.RingIO(10000)
-picopcmcia.picopcmcia_low.set_trace(ring)
-async def s(ring):
-    uart1.write(b"DUMP\r\n")
-    sreader = asyncio.StreamReader(ring)
-    while True:
-        data = await sreader.read(16)
-        pdata = struct.unpack('<IIII',data)
-        out = "0x%04X 0x%07X 0x%07X 0x%02X\r\n" % pdata 
-        uart1.write(out)
-
 async def t():
     while True:
         await asyncio.sleep_ms(1000)
@@ -119,16 +108,23 @@ INT13_CBK=None
 
 import vfs
 import sdcard
-vfs.mount(sdcard.SDCard(machine.SPI(0),machine.Pin(37)),"/sd")
+vfs.mount(sdcard.SDCard(machine.SPI(0,baudrate=30000000),machine.Pin(37)),"/sd")
 
 fdfile=open("/sd/TFT.raw","rb+")
 
-class Testioface():
+netstream = None
 
+async def new_conn(reader,writer):
+    global netstream
+    netstream = reader
+
+installed = False
+
+class Testioface():
     def __init__(self,worker):
         print("init")
-        self.send=micropython.RingIO(1000)
-        self.recv=micropython.RingIO(1000)
+        self.send=micropython.RingIO(16100)
+        self.recv=micropython.RingIO(8050)
         worker.set_send(self.send)
         worker.set_recv(self.recv)
         self.sreader = asyncio.StreamReader(self.recv)
@@ -137,42 +133,34 @@ class Testioface():
     async def coro(self):
         global INT19_CBK
         global INT13_CBK
-        global fdfile        
+        global fdfile
+        global netstream
+        global installed
         await bioslayer.readentry(self)
         if self.regs["irq"] == 0:
-            await bioslayer.putstr(self,"PICOPCMCIA")
-            INT19_CBK = await bioslayer.install_irq(self,0x19)
-            await bioslayer.callback_end_noset(self)
-            return
+            if installed:
+                await bioslayer.putstr(self,"PICOPCMCIA")
+                import cga
+                while netstream == None:
+                    await asyncio.sleep_ms(1000)
+                await cga.display_netframes(self,netstream)         
+                #await bioslayer.callback_end(self)
+
+                return
+            else:
+                await bioslayer.putstr(self,"PICOPCMCIA")
+                INT19_CBK = await bioslayer.install_irq(self,0x19)
+                await bioslayer.callback_end_noset(self)
+                return
         elif self.regs["irq"] == 1:
             if self.regs["codeplace"] == 0x19:
                 await bioslayer.putstr(self,"PICOPCMCIA")
-                INT13_CBK = await bioslayer.install_irq(self,0x13)
-                #await bioslayer.chain(self,INT19_CBK)
-                #await bioslayer.callback_end(self)
+                await bioslayer.putmem(self,0,0x7c00,included_roms.rom_8088())
+                installed = True
                 regs = bioslayer.stackregs()
-                regs["ax"] = 0x0201
-                regs["cx"] = 0x1
-                regs["dx"] = 0
-                regs["es"] = 0
-                regs["bx"] = 0x7c00
-                await bioslayer.stackcode8(self,regs,bytes([0xCD,0x13,0xCB]))
                 await bioslayer.stackcode8(self,regs,bytes([
-                    0xEA, 0x00, 0x7C, 0x00, 0x00, 0x00, 0x00])) #yolo, python hangs here - exit jmp not handled, should be by retcode
-                
-
-                return
-            elif self.regs["codeplace"] == 0x13:
-                if self.regs["dx"]&0xff == 0:
-                    await int13hhandler.handler(self,fdfile)
-                    return
-                else:
-                    self.regs["ax"] = 0x0101
-                    self.regs["rf"] |= 0x0001
-                    self.regs["rettype"]=1
-                    await bioslayer.callback_end(self)
-                    return
-        
+                    0xEA, 0x03, 0x00, 0xc0, 0x07]))
+      
         print("No handler for:\n")
         print(self.regs)
         
@@ -187,10 +175,10 @@ picopcmcia.ready()
 
 import aiorepl
 async def main():
-    #repl = asyncio.create_task(aiorepl.task())
-    tracer = asyncio.create_task(s(ring))
+    repl = asyncio.create_task(aiorepl.task())
     time = asyncio.create_task(t())
-    await asyncio.gather(tracer, time)
+    server = asyncio.create_task(uasyncio.start_server(new_conn,"0.0.0.0",5555))
+    await asyncio.gather(repl, time, server)
 
 
 asyncio.run(main())
