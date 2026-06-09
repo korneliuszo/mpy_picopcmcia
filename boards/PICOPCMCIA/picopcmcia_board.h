@@ -106,6 +106,8 @@
 #define CYW43_WL_GPIO_LED_PIN 0
 #endif
 
+#define CYW43_PIO_CLOCK_DIV_INT 4
+
 // cyw43 SPI pins can't be changed at runtime
 #ifndef CYW43_PIN_WL_DYNAMIC
 #define CYW43_PIN_WL_DYNAMIC 0
