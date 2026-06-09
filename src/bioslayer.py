@@ -28,14 +28,11 @@ async def readentry(self):
         ),
         (struct.unpack('<BBHHHHHHHHHHHHHHHB',
     await self.sreader.readexactly(33)))))
-    await finish_cmd(self,0x03)
+    self.last_cmd =  finish_cmd(self,0x03)
 
 async def finish_cmd(self,req):
     if (await self.sreader.readexactly(1))[0] != req:
         raise Exception("Not synced")
-    if self.send.any() != 0:
-        raise Exception("Not synced2")
-
 
 async def callback_end(self):
     self.send.write(bytes([
@@ -58,7 +55,8 @@ async def callback_end(self):
             self.regs["rf"], #only in irq
             self.regs["rettype"]
             ))
-    await finish_cmd(self,0x02)
+    await self.last_cmd
+    self.last_cmd = finish_cmd(self,0x02)
     await callback_end_noset(self)
 
 async def callback_end_noset(self):
@@ -82,6 +80,7 @@ def stackregs():
         }
 
 async def stackcode8(self,regs,code):
+    await self.last_cmd
     self.send.write(
         bytes([
             0x01])+
@@ -110,36 +109,36 @@ async def stackcode8(self,regs,code):
         ),
         (struct.unpack('<HHHHHHHHH',
     await self.sreader.readexactly(18)))))
-
-    await finish_cmd(self,0x01)
+    self.last_cmd = finish_cmd(self,0x01)
     return regs_out
 
 async def putmem(self,seg,addr,data):
     l=len(data)
-    for i in range(0,l,512):
-        l2=min(512,l-i)        
+    for i in range(0,l,8010):
+        l2=min(8010,l-i)        
         await putmems(self,seg,addr+i,data[i:i+l2])
 
 async def putmems(self,seg,addr,data):
-    print("Put: ",seg,addr,len(data))
     self.send.write(
         bytes([0x06])+
         struct.pack(">HHH",seg,addr,len(data))+
         data)
-    await finish_cmd(self,0x06)
+    await self.last_cmd
+    self.last_cmd = finish_cmd(self,0x06)
 
 async def getmem(self,seg,addr,l):
     ret = bytearray(l)
-    for i in range(0, l, 512):
-        l2 = min(512,l-i)
+    for i in range(0, l, 8010):
+        l2 = min(8010,l-i)
         ret[i:i+l2] = await getmem_pages(self,seg,addr+i,l2)
 
 async def getmems(self,seg,addr,l):
     self.send.write(
         bytes([0x07])+
         struct.pack(">HHH",seg,addr,l))
+    await self.last_cmd    
     ret =  await self.sreader.readexactly(l)
-    await finish_cmd(self,0x07)
+    self.last_cmd = finish_cmd(self,0x07)
     return ret
 
 async def putstr(self,line):
@@ -152,8 +151,10 @@ async def putstr(self,line):
 async def install_irq(self,irq):
     self.send.write(
         bytes([0x08,irq]))
+    await self.last_cmd
     ret =  await self.sreader.readexactly(4)
-    await finish_cmd(self,0x08)
+    self.last_cmd = finish_cmd(self,0x08)
+
     return struct.unpack("<HH",ret)
 
 async def getch(self):
