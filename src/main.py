@@ -31,7 +31,6 @@ uart1.write(b"\r\n\r\n\r\n\r\nWOOTBOOT!!\r\n")
 
 picopcmcia.init()
 
-tsf = asyncio.ThreadSafeFlag()
 
 def thr(tsf):
     picopcmcia.picopcmcia_low.init()
@@ -40,9 +39,6 @@ def thr(tsf):
         time.sleep_ms(1000)
 
 import _thread
-_thread.start_new_thread(thr,(tsf,))
-
-asyncio.run(tsf.wait())
 
 class tracerom:
     def __init__(self,rom):
@@ -175,6 +171,10 @@ picopcmcia.ready()
 
 import aiorepl
 async def main():
+    tsf = asyncio.ThreadSafeFlag()
+    _thread.start_new_thread(thr,(tsf,))
+    await tsf.wait()
+    picopcmcia.ready()
     repl = asyncio.create_task(aiorepl.task())
     time = asyncio.create_task(t())
     server = asyncio.create_task(uasyncio.start_server(new_conn,"0.0.0.0",5555))
