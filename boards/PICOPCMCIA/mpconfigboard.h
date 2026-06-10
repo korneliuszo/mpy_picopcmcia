@@ -13,8 +13,6 @@
 #define CYW43_SPI_PIO (1)
 
 // USB VID/PID
-#define MICROPY_HW_USB_VID (0x1B4F)
-#define MICROPY_HW_USB_PID (0x0047)
 
 // UART0
 #define MICROPY_HW_UART0_TX  (34)
